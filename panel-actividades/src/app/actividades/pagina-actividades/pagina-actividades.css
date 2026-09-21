@@ -1,0 +1,4 @@
+.tablero { display: flex; flex-direction: column; gap: 1.5rem; }
+.controles { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
+.campo { display: flex; flex-direction: column; gap: .25rem; min-width: 0; }
+.campo input, .campo select { padding: .4rem; }

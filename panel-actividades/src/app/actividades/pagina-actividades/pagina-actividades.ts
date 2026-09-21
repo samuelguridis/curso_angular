@@ -1,15 +1,22 @@
 import { Component, computed, effect, signal } from '@angular/core';
-import { Actividad, EstadoActividad, FiltroEstado, FiltroPrioridad, Prioridad } from '../modelos/actividad';
+import { Actividad, EstadoActividad, FiltroEstado, FiltroPrioridad, Prioridad } from '../../modelos/actividad';
+import { PanelSeccion } from '../../compartido/panel-seccion/panel-seccion';
+import { FiltrosActividades } from '../filtros-actividades/filtros-actividades';
+import { ListaActividades } from '../lista-actividades/lista-actividades';
+import { ResumenActividades } from '../resumen-actividades/resumen-actividades';
+import { TarjetaActividad } from '../tarjeta-actividad/tarjeta-actividad';
 
 
 
 
 @Component({
-  selector: 'app-tablero-prioridades',
-  templateUrl: './tablero-prioridades.html',
-  styleUrl: './tablero-prioridades.css',
+  selector: 'app-pagina-actividades',
+  standalone: true,
+  imports: [PanelSeccion, ResumenActividades, FiltrosActividades, ListaActividades, TarjetaActividad],
+  templateUrl: './pagina-actividades.html',
+  styleUrl: './pagina-actividades.css',
 })
-export class TableroPrioridades {
+export class PaginaActividades {
   protected readonly actividades = signal<Actividad[]>([
     { id: 1, titulo: 'Preparar estructura HTML', estado: 'completada', prioridad: 'alta', creadaEn: '2026-08-10', destacada: false },
     { id: 2, titulo: 'Revisar contraste', estado: 'en_progreso', prioridad: 'media', creadaEn: '2026-08-12', destacada: true },
@@ -137,4 +144,3 @@ export class TableroPrioridades {
     this.seleccionadaId.set(null);
   }
 }
-
