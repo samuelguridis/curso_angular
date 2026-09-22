@@ -1,10 +1,10 @@
-import { Component, computed, effect, signal } from '@angular/core';
-import { Actividad, EstadoActividad, FiltroEstado, FiltroPrioridad, Prioridad } from '../../modelos/actividad';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { ActividadesService } from '../actividades';
+import { FiltroEstado, FiltroPrioridad, Prioridad } from '../modelos/actividad';
 import { PanelSeccion } from '../../compartido/panel-seccion/panel-seccion';
 import { FiltrosActividades } from '../filtros-actividades/filtros-actividades';
 import { ListaActividades } from '../lista-actividades/lista-actividades';
 import { ResumenActividades } from '../resumen-actividades/resumen-actividades';
-import { TarjetaActividad } from '../tarjeta-actividad/tarjeta-actividad';
 
 
 
@@ -12,18 +12,16 @@ import { TarjetaActividad } from '../tarjeta-actividad/tarjeta-actividad';
 @Component({
   selector: 'app-pagina-actividades',
   standalone: true,
-  imports: [PanelSeccion, ResumenActividades, FiltrosActividades, ListaActividades, TarjetaActividad],
+  imports: [PanelSeccion, ResumenActividades, FiltrosActividades, ListaActividades],
   templateUrl: './pagina-actividades.html',
   styleUrl: './pagina-actividades.css',
 })
 export class PaginaActividades {
-  protected readonly actividades = signal<Actividad[]>([
-    { id: 1, titulo: 'Preparar estructura HTML', estado: 'completada', prioridad: 'alta', creadaEn: '2026-08-10', destacada: false },
-    { id: 2, titulo: 'Revisar contraste', estado: 'en_progreso', prioridad: 'media', creadaEn: '2026-08-12', destacada: true },
-    { id: 3, titulo: 'Practicar TypeScript', estado: 'pendiente', prioridad: 'alta', creadaEn: '2026-08-14', destacada: false },
-    { id: 4, titulo: 'Comprobar vista estrecha', estado: 'pendiente', prioridad: 'baja', creadaEn: '2026-08-16', destacada: false },
-    { id: 5, titulo: 'Ejecutar el build', estado: 'pendiente', prioridad: 'media', creadaEn: '2026-08-18', destacada: false },
-  ]);
+  private readonly servicio = inject(ActividadesService);
+
+  protected readonly actividades = this.servicio.actividades;
+  protected readonly aviso = this.servicio.aviso;
+  protected readonly sinGuardar = this.servicio.sinGuardar;
 
   private readonly orden: Record<Prioridad, number> = { alta: 0, media: 1, baja: 2 };
 
@@ -33,51 +31,23 @@ export class PaginaActividades {
   protected readonly seleccionadaId = signal<number | null>(null);
 
   protected alternarDestacada(id: number): void {
-    this.actividades.update((actuales) =>
-      actuales.map((actividad) =>
-        actividad.id === id ? { ...actividad, destacada: !actividad.destacada } : actividad,
-      ),
-    );
+    this.servicio.alternarDestacada(id);
   }
 
   protected avanzarEstado(id: number): void {
-    this.actividades.update((actuales) =>
-      actuales.map((actividad) =>
-        actividad.id === id
-          ? { ...actividad, estado: this.siguienteEstado(actividad.estado) }
-          : actividad,
-      ),
-    );
+    this.servicio.avanzarEstado(id);
   }
 
   protected eliminar(id: number): void {
-    this.actividades.update((actuales) => actuales.filter((actividad) => actividad.id !== id));
+    this.servicio.eliminar(id);
     this.seleccionadaId.update((actual) => (actual === id ? null : actual));
   }
 
-  private siguienteEstado(estado: EstadoActividad): EstadoActividad {
-    if (estado === 'pendiente') return 'en_progreso';
-    if (estado === 'en_progreso') return 'completada';
-    return 'completada';
-  }
-
-  protected readonly total = computed(() => this.actividades().length);
-
-  protected readonly pendientes = computed(
-    () => this.actividades().filter((a) => a.estado === 'pendiente').length,
-  );
-
-  protected readonly enProgreso = computed(
-    () => this.actividades().filter((a) => a.estado === 'en_progreso').length,
-  );
-
-  protected readonly completadas = computed(
-    () => this.actividades().filter((a) => a.estado === 'completada').length,
-  );
-
-  protected readonly porcentaje = computed(() =>
-    this.total() === 0 ? 0 : Math.round((this.completadas() / this.total()) * 100),
-  );
+  protected readonly total = this.servicio.total;
+  protected readonly pendientes = this.servicio.pendientes;
+  protected readonly enProgreso = this.servicio.enProgreso;
+  protected readonly completadas = this.servicio.completadas;
+  protected readonly porcentaje = this.servicio.porcentaje;
 
   protected readonly visibles = computed(() => {
     const termino = this.termino().trim().toLocaleLowerCase('es');
@@ -139,7 +109,7 @@ export class PaginaActividades {
   }
 
   protected restablecer(): void {
-    this.actividades.set([]);
+    this.servicio.vaciar();
     this.limpiarFiltros();
     this.seleccionadaId.set(null);
   }

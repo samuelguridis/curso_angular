@@ -1,5 +1,5 @@
 import { Component, computed, model } from '@angular/core';
-import { FiltroEstado, FiltroPrioridad } from '../../modelos/actividad';
+import { FiltroEstado, FiltroPrioridad } from '../modelos/actividad';
 
 @Component({
   selector: 'app-filtros-actividades',

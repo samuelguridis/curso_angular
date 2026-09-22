@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { Actividad } from '../../modelos/actividad';
+import { Actividad } from '../modelos/actividad';
 import { TarjetaActividad } from '../tarjeta-actividad/tarjeta-actividad';
 
 @Component({
