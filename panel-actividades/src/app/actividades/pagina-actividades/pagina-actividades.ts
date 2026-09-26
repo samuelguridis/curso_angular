@@ -1,4 +1,5 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ActividadesService } from '../actividades';
 import { FiltroEstado, FiltroPrioridad, Prioridad } from '../modelos/actividad';
 import { PanelSeccion } from '../../compartido/panel-seccion/panel-seccion';
@@ -18,6 +19,8 @@ import { ResumenActividades } from '../resumen-actividades/resumen-actividades';
 })
 export class PaginaActividades {
   private readonly servicio = inject(ActividadesService);
+  private readonly router = inject(Router);
+  private readonly ruta = inject(ActivatedRoute);
 
   protected readonly actividades = this.servicio.actividades;
   protected readonly aviso = this.servicio.aviso;
@@ -25,9 +28,15 @@ export class PaginaActividades {
 
   private readonly orden: Record<Prioridad, number> = { alta: 0, media: 1, baja: 2 };
 
-  protected readonly termino = signal('');
-  protected readonly filtroEstado = signal<FiltroEstado>('todas');
-  protected readonly filtroPrioridad = signal<FiltroPrioridad>('todas');
+  readonly buscar = input<string | undefined>('');
+  readonly estado = input<FiltroEstado | undefined>('todas');
+  readonly prioridad = input<FiltroPrioridad | undefined>('todas');
+
+  protected readonly termino = computed(() => this.buscar() ?? '');
+  protected readonly filtroEstado = computed(() => this.estado() ?? 'todas');
+  protected readonly filtroPrioridad = computed(() => this.prioridad() ?? 'todas');
+
+  protected readonly nuevoTitulo = signal('');
   protected readonly seleccionadaId = signal<number | null>(null);
 
   protected alternarDestacada(id: number): void {
@@ -41,6 +50,21 @@ export class PaginaActividades {
   protected eliminar(id: number): void {
     this.servicio.eliminar(id);
     this.seleccionadaId.update((actual) => (actual === id ? null : actual));
+  }
+
+  protected crearActividad(evento: Event): void {
+    evento.preventDefault();
+    const titulo = this.nuevoTitulo().trim();
+    if (!titulo) return;
+
+    this.servicio.crear({
+      titulo,
+      estado: 'pendiente',
+      prioridad: 'media',
+      creadaEn: new Date().toISOString().slice(0, 10),
+      destacada: false,
+    });
+    this.nuevoTitulo.set('');
   }
 
   protected readonly total = this.servicio.total;
@@ -80,22 +104,29 @@ export class PaginaActividades {
     () => this.actividades().find((a) => a.id === this.seleccionadaId()) ?? null,
   );
 
-  protected buscar(evento: Event): void {
-    this.termino.set((evento.target as HTMLInputElement).value);
+  protected cambiarBuscar(valor: string): void {
+    this.actualizar({ buscar: valor.trim() === '' ? null : valor });
   }
 
-  protected cambiarFiltroEstado(evento: Event): void {
-    this.filtroEstado.set((evento.target as HTMLSelectElement).value as FiltroEstado);
+  protected cambiarEstado(valor: FiltroEstado): void {
+    this.actualizar({ estado: valor === 'todas' ? null : valor });
   }
 
-  protected cambiarFiltroPrioridad(evento: Event): void {
-    this.filtroPrioridad.set((evento.target as HTMLSelectElement).value as FiltroPrioridad);
+  protected cambiarPrioridad(valor: FiltroPrioridad): void {
+    this.actualizar({ prioridad: valor === 'todas' ? null : valor });
   }
 
   protected limpiarFiltros(): void {
-    this.termino.set('');
-    this.filtroEstado.set('todas');
-    this.filtroPrioridad.set('todas');
+    this.actualizar({ buscar: null, estado: null, prioridad: null });
+  }
+
+  private actualizar(cambios: Record<string, string | null>): void {
+    this.router.navigate([], {
+      relativeTo: this.ruta,
+      queryParams: cambios,
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   protected seleccionar(id: number): void {

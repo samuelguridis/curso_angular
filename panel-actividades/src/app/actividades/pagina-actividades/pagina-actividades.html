@@ -26,14 +26,32 @@
 
   <app-panel-seccion titulo="Buscar y filtrar">
     <app-filtros-actividades
-      [(termino)]="termino"
-      [(estado)]="filtroEstado"
-      [(prioridad)]="filtroPrioridad" />
+      [termino]="termino()"
+      (terminoChange)="cambiarBuscar($event)"
+      [estado]="filtroEstado()"
+      (estadoChange)="cambiarEstado($event)"
+      [prioridad]="filtroPrioridad()"
+      (prioridadChange)="cambiarPrioridad($event)" />
     <p aria-live="polite">{{ mostradas() }} de {{ total() }} actividades visibles</p>
   </app-panel-seccion>
 
   <app-panel-seccion titulo="Actividades">
     <button acciones type="button" (click)="restablecer()">Vaciar el tablero</button>
+
+    <form class="formulario-actividad" (submit)="crearActividad($event)">
+      <label for="nueva-actividad">Añadir una actividad</label>
+      <div class="campo-nueva-actividad">
+        <input
+          id="nueva-actividad"
+          type="text"
+          required
+          [value]="nuevoTitulo()"
+          (input)="nuevoTitulo.set($any($event.target).value)"
+          placeholder="Ej. Preparar una presentación"
+        />
+        <button type="submit">Agregar</button>
+      </div>
+    </form>
 
     <app-lista-actividades
       [actividades]="visibles()"
