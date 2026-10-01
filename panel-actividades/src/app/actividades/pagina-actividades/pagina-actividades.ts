@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActividadesService } from '../actividades';
 import { FiltroEstado, FiltroPrioridad, Prioridad } from '../modelos/actividad';
 import { PanelSeccion } from '../../compartido/panel-seccion/panel-seccion';
@@ -13,7 +13,7 @@ import { ResumenActividades } from '../resumen-actividades/resumen-actividades';
 @Component({
   selector: 'app-pagina-actividades',
   standalone: true,
-  imports: [PanelSeccion, ResumenActividades, FiltrosActividades, ListaActividades],
+  imports: [PanelSeccion, ResumenActividades, FiltrosActividades, ListaActividades, RouterLink],
   templateUrl: './pagina-actividades.html',
   styleUrl: './pagina-actividades.css',
 })
@@ -57,13 +57,7 @@ export class PaginaActividades {
     const titulo = this.nuevoTitulo().trim();
     if (!titulo) return;
 
-    this.servicio.crear({
-      titulo,
-      estado: 'pendiente',
-      prioridad: 'media',
-      creadaEn: new Date().toISOString().slice(0, 10),
-      destacada: false,
-    });
+    if (!this.servicio.crear(titulo, '', 'media')) return;
     this.nuevoTitulo.set('');
   }
 
