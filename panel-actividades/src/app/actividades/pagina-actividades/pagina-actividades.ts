@@ -1,11 +1,15 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActividadesApi } from '../../api/actividades-api';
 import { ActividadesService } from '../actividades';
-import { FiltroEstado, FiltroPrioridad, Prioridad } from '../modelos/actividad';
+import { Actividad, FiltroEstado, FiltroPrioridad, Prioridad } from '../modelos/actividad';
 import { PanelSeccion } from '../../compartido/panel-seccion/panel-seccion';
 import { FiltrosActividades } from '../filtros-actividades/filtros-actividades';
 import { ListaActividades } from '../lista-actividades/lista-actividades';
 import { ResumenActividades } from '../resumen-actividades/resumen-actividades';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, of, switchMap } from 'rxjs';
 
 
 
@@ -19,12 +23,13 @@ import { ResumenActividades } from '../resumen-actividades/resumen-actividades';
 })
 export class PaginaActividades {
   private readonly servicio = inject(ActividadesService);
+  private readonly api = inject(ActividadesApi);
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
 
   protected readonly actividades = this.servicio.actividades;
-  protected readonly aviso = this.servicio.aviso;
-  protected readonly sinGuardar = this.servicio.sinGuardar;
+  protected readonly cargando = this.servicio.cargando;
+  protected readonly errorCarga = this.servicio.error;
 
   private readonly orden: Record<Prioridad, number> = { alta: 0, media: 1, baja: 2 };
 
@@ -35,6 +40,7 @@ export class PaginaActividades {
   protected readonly termino = computed(() => this.buscar() ?? '');
   protected readonly filtroEstado = computed(() => this.estado() ?? 'todas');
   protected readonly filtroPrioridad = computed(() => this.prioridad() ?? 'todas');
+  protected readonly resultados = signal<Actividad[] | null>(null);
 
   protected readonly nuevoTitulo = signal('');
   protected readonly seleccionadaId = signal<number | null>(null);
@@ -131,11 +137,17 @@ export class PaginaActividades {
     effect(() => {
       console.info(`[Tablero] ${this.mostradas()} de ${this.total()} visibles`);
     });
+
+    toObservable(this.termino)
+      .pipe(
+        debounceTime(300),
+        switchMap((t) => (t.trim() === '' ? of(null) : this.api.buscar(t))),
+        takeUntilDestroyed(),
+      )
+      .subscribe((r) => this.resultados.set(r));
   }
 
-  protected restablecer(): void {
-    this.servicio.vaciar();
-    this.limpiarFiltros();
-    this.seleccionadaId.set(null);
+  protected recargar(): void {
+    this.servicio.cargar();
   }
 }

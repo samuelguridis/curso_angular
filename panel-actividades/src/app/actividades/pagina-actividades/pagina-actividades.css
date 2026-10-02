@@ -6,4 +6,4 @@
 .campo-nueva-actividad { display: flex; flex-wrap: wrap; gap: .5rem; }
 .campo-nueva-actividad input { flex: 1 1 16rem; min-width: 0; padding: .5rem; }
 .campo-nueva-actividad button { padding: .5rem .9rem; }
-.aviso { margin: 0; border: 1px solid #949494; border-radius: 0.5rem; padding: 0.5rem 0.75rem; }
+.cargando, .error { margin: 0; border: 1px solid #949494; border-radius: 0.5rem; padding: 0.5rem 0.75rem; }
